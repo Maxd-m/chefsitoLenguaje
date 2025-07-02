@@ -60,7 +60,7 @@ class AnalizadorSintactico:
         self.consumir('IDENTIFICADOR')
 
     def analizar_programa(self):
-        print("\n🧾 Analizando estructura general del programa")
+        print("\n Analizando estructura general del programa")
         self.consumir('PALABRA_RESERVADA_INICIO')
         self.analizar_ingredientes()
         self.analizar_procedimiento()
@@ -69,14 +69,17 @@ class AnalizadorSintactico:
 
 if __name__ == '__main__':
     from lexicoChef import AnalizadorLexicoChefsito
+    from analizador_semantico import AnalizadorSemantico
 
     analizador_lex = AnalizadorLexicoChefsito('vamoss.csv')
     texto = '''
     INICIO
     INGREDIENTES
     AGUA 10.5 LITROS
+    ACEITE 2.5 LITROS
     PROCEDIMIENTO
-    SEPARAR(AGUA,HUEVOS) EN TUPPER.hola
+    SEPARAR(AGUA, ACEITE) EN TUPPER.hola
+    FIN
     '''
 
     tokens, errores = analizador_lex.procesarTexto(texto)
@@ -90,3 +93,7 @@ if __name__ == '__main__':
     sintactico.analizar_programa()
 
     print("\n✅ Análisis sintáctico completado sin errores.")
+
+    print("\n🔎 INICIANDO ANÁLISIS SEMÁNTICO")
+    semantico = AnalizadorSemantico(tokens)
+    semantico.analizar()
