@@ -1,195 +1,194 @@
 import csv
 
-class Lexico:
-    def __init__(self, cadenas):
-        filename = 'malo(2).csv'
-        self.estados_finales_reservadas = [1000,1020,1040,1060,1080,1100,1120,1140,1160,1180,1200,1220,1240,1260,1280,1300,1320,1340,1360,1380,1400]
-        
-        # self.estados_finales_operadores = [2010, 2020, 2030, 2040, 2050, 2060, 2070, 2080, 2090, 2100, 2110, 2120, 2130, 2140, 2150, 2160, ]
+class AnalizadorLexicoChefsito:
+    def __init__(self, archivoMatriz):
+        self.archivoMatriz = archivoMatriz
+        self.automata = {}
+        self.alfabeto = []
+        self.mapeo_caracteres = {}
+        self.debug = False
 
-        self.estados_finales_separadoes = [3000, 3020]
+        self.tiposToken = {
+            '1000': 'PALABRA_RESERVADA_AÑADIR',
+            '1020': 'PALABRA_RESERVADA_COCINAR', 
+            '1040': 'PALABRA_RESERVADA_CORTAR',
+            '1060': 'PALABRA_RESERVADA_EN',
+            '1080': 'PALABRA_RESERVADA_FIN',
+            '1100': 'PALABRA_RESERVADA_HORNEAR',
+            '1120': 'PALABRA_RESERVADA_INGREDIENTES',
+            '1140': 'PALABRA_RESERVADA_INICIO',
+            '1160': 'PALABRA_RESERVADA_KILOS',
+            '1180': 'PALABRA_RESERVADA_LITROS',
+            '1200': 'PALABRA_RESERVADA_MIENTRAS_HAYA',
+            '1220': 'PALABRA_RESERVADA_MINUTOS',
+            '1240': 'PALABRA_RESERVADA_PIEZAS',
+            '1260': 'PALABRA_RESERVADA_POR',
+            '1280': 'PALABRA_RESERVADA_PROCEDIMIENTO',
+            '1300': 'PALABRA_RESERVADA_RECETA',
+            '1320': 'PALABRA_RESERVADA_SEPARAR',
+            '1340': 'PALABRA_RESERVADA_SI_HAY',
+            '1360': 'PALABRA_RESERVADA_TUPPER',
+            '1380': 'PALABRA_RESERVADA_VACIAR',
+            '1400': 'PALABRA_RESERVADA_VER',
+            '3000': 'SIGNO_COMA',
+            '3020': 'SIGNO_PUNTO',
+            '5000': 'PARENTESIS_ABRE',
+            '5020': 'PARENTESIS_CIERRA',
+            '3040': 'ESPACIO',
+            '999': 'ERROR'
+        }
 
-        # self.estados_finales_llaves = [4000, 4100]
-        self.estados_finales_parentesis = [5000, 5020]
+        for e in ['6000', '6020']:
+            self.tiposToken[e] = 'IDENTIFICADOR'
+        for e in ['7000', '7020', '8000', '8020']:
+            self.tiposToken[e] = 'CONSTANTE_NUMERICA'
 
+        self.cargarMatrizTransicion()
 
-        self.estados_finales_numeros = [7020, 8020]
+    def cargarMatrizTransicion(self):
+        try:
+            with open(self.archivoMatriz, 'r', encoding='utf-8') as f:
+                lineas = f.readlines()
+                encabezados = lineas[0].strip().split(',')
+                for i in range(len(encabezados)):
+                    if encabezados[i] == "":
+                        encabezados[i] = " "
+                self.alfabeto = encabezados[1:]
+                self.mapeo_caracteres = {}
+                for simbolo in self.alfabeto:
+                    if simbolo.upper() == "COMA":
+                        self.mapeo_caracteres[","] = simbolo
+                    elif simbolo.isalpha():
+                        self.mapeo_caracteres[simbolo.lower()] = simbolo
+                        self.mapeo_caracteres[simbolo.upper()] = simbolo
+                    else:
+                        self.mapeo_caracteres[simbolo] = simbolo
 
-        self.finales=[self.estados_finales_reservadas + self.estados_finales_separadoes + self.estados_finales_parentesis + self.estados_finales_numeros + [6020] + [9000,999]]
-        # print("Estados finales reservadas: ", self.finales[0])
-        self.tokens = []  # Lista para guardar los tokens reconocidos
+                for i in range(1, len(lineas)):
+                    linea = lineas[i].strip().split(',')
+                    if len(linea) < 2:
+                        continue
+                    estado = linea[0]
+                    if estado not in self.automata:
+                        self.automata[estado] = {}
+                    for j in range(1, min(len(linea), len(encabezados))):
+                        simbolo = encabezados[j]
+                        if j < len(linea) and linea[j]:
+                            self.automata[estado][simbolo] = linea[j]
+        except Exception as e:
+            print(f"❌ Error al cargar la matriz de transición: {e}")
 
-        # Inicializar el diccionario vacío
-        self.mat_transicion = {}
+    def obtenerColumna(self, caracter):
+        return self.mapeo_caracteres.get(caracter)
 
-        # Abrir el archivo CSV
-        with open(filename, mode='r', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            
-            # Iterar a través de las filas y organizar los datos en el diccionario
-            for row in reader:
-                for column, value in row.items():
-                    if column not in self.mat_transicion:
-                        self.mat_transicion[column] = []
-                    self.mat_transicion[column].append(value)  
-        
-        # print(self.mat_transicion['Ñ'][0])  # Imprimir la matriz de transición para verificar su contenido
+    def esFinal(self, estado):
+        return estado in self.tiposToken and not self.esError(estado)
 
-    
-        #Separar texto en varias cadenas
-        # palabras = cadenas.split()
-        # for palabra in palabras:
+    def esError(self, estado):
+        return estado == '999'
 
-        self.estado_actual=0
-        #Tipo de caracter 
-        self.tipo_actual=' '
-        # self.flg_reconoce=True
-        #Analizar cada cadena
-        self.leer_cadena(cadenas)
-        # print("Tokens reconocidos: ", self.tokens)  # Imprimir todos los tokens reconocidos
+    def esEstadoNumericoValido(self, estado):
+        return estado in ['7000', '8000', '7020', '8020', 'q87']
 
-        # return self.tokens
+    def procesarTexto(self, texto):
+        tokens_encontrados = []
+        errores_lexicos = []
+        i = 0
+        while i < len(texto):
+            if texto[i] in [' ', '\t', '\n', '\r']:
+                i += 1
+                continue
+            resultado = self.procesarToken(texto, i)
+            if resultado['token']:
+                tokens_encontrados.append(resultado['token'])
+                i = resultado['token']['posicion'] + len(resultado['token']['valor'])
+            else:
+                errores_lexicos.append(resultado['error'])
+                i = resultado['siguiente_posicion']
+        return tokens_encontrados, errores_lexicos
 
-    def leer_cadena(self,cadena):
-        cont = 1
-        historial = []  # Lista para guardar los últimos caracteres
-        for caracter in cadena:
+    def procesarToken(self, texto, posicion_inicial):
+        estado = 'q0'
+        token_actual = ""
+        ultimo_estado_final = None
+        ultimo_token_valido = ""
+        ultima_posicion_valida = posicion_inicial
+        i = posicion_inicial
 
-            historial.append(caracter)
-            if len(historial) > 11:  # Mantener solo los últimos 10 caracteres
-                historial.pop(0)
+        while i < len(texto):
+            caracter = texto[i]
 
-            if cont == 3:
+            if caracter in [' ', '\t', '\n', '\r']:
+                if token_actual:
+                    break
+                i += 1
+                posicion_inicial += 1
+                continue
+
+            columna = self.obtenerColumna(caracter)
+            if columna is None:
                 break
 
-            self.tipo_actual=caracter
-            # print("Tipo actual: ", self.tipo_actual)
-            # print("Estado actual: ", self.estado_actual)
+            if estado in self.automata and columna in self.automata[estado]:
+                nuevo_estado = self.automata[estado][columna]
 
-            if self.estado_actual == None:
-                    self.estado_actual = 999
-
-            if not self.estado_actual == 999:
-                
-                # print('---------------------------------------------')
-                # print("tipo actual: ", self.tipo_actual)
-                # print("Estado anterior: ", self.estado_actual)
-
-                
-                
-                
-                if self.tipo_actual == ' ':
-                    self.tipo_actual = 'blank'
-
-                # print("Estado actual00: ", self.estado_actual)
-                
-                try:
-                    self.estado_actual = self.mat_transicion[self.tipo_actual][int(self.estado_actual)]
-                    # print("Estado actual: ", self.estado_actual)
-                except KeyError:
-                    print(f"Error: El tipo '{self.tipo_actual}' no está definido en la matriz de transición.")
-                    self.estado_actual = 999
+                if self.esError(nuevo_estado):
                     break
-                if self.estado_actual == '6000':
-                    self.estado_actual = '130'
-                if self.estado_actual == '7000':
-                    self.estado_actual = '131'
-                if self.estado_actual == '8000':
-                    self.estado_actual = '132'
-                
 
-                if int(self.estado_actual) in self.finales[0]:
-                    print("Estado final alcanzado: ", self.estado_actual)
-                    self.reconocer()
+                estado = nuevo_estado
+                token_actual += caracter
+
+                if self.esFinal(estado) or self.esEstadoNumericoValido(estado):
+                    ultimo_estado_final = estado
+                    ultimo_token_valido = token_actual
+                    ultima_posicion_valida = i + 1
+
+                i += 1
             else:
-                # print('Error lexico en: ',caracter, " no se reconoce")
-                # print('Error léxico en:', caracter, "- no se reconoce")
-                print('Error lexico en el ultimo caracter de:', ''.join(historial))
-                return
-                # break
-        
+                break
 
-            
-            # self.tokens.append(self.mat_transicion['fila'][self.estado_actual])
-        # else:
-            # self.tokens.append(self.mat_transicion['fila'][self.estado_actual])
+        if ultimo_estado_final:
+            if ultima_posicion_valida == posicion_inicial:
+                ultima_posicion_valida += 1  # ← fuerza el avance aunque sea 1 letra
 
-    def reconocer(self):
-        self.estado_actual = int(self.estado_actual)
-        # objetivo = int(self.mat_transicion['fila'][self.estado_actual])
-        objetivo = int(self.estado_actual)
-
-
-        if objetivo in self.estados_finales_reservadas:
-            self.tokens.append(self.estado_actual)
-            self.estado_actual=0
-            self.tipo_actual=' '
-        elif objetivo in self.estados_finales_numeros:
-            self.tokens.append(self.estado_actual)
-            # self.tokens.append(self.mat_transicion['fila'][self.estado_actual])
-            self.estado_actual=0
-            self.tipo_actual=' '
-        
-        elif objetivo in self.estados_finales_separadoes:
-            self.tokens.append(self.estado_actual)
-            self.estado_actual=0
-            self.tipo_actual=' '
-            # self.tokens.append(self.mat_transicion['fila'][self.estado_actual])
-        
-        elif objetivo in self.estados_finales_parentesis:
-            self.tokens.append(self.estado_actual)
-            self.estado_actual=0
-            self.tipo_actual=' '
-            # self.tokens.append(self.mat_transicion['fila'][self.estado_actual])
-        elif objetivo == 6020:
-            self.tokens.append(self.estado_actual)
-            self.estado_actual=0
-            self.tipo_actual=' '
-        elif objetivo == 9000:
-            self.tokens.append(self.estado_actual)
-            self.estado_actual=0
-            self.tipo_actual=' '
-        elif objetivo == 999:
-            self.tokens.append(self.estado_actual)
-            self.estado_actual=999
-            self.tipo_actual=' '
-
-    def comparar_matriz(self, objetivo):
-        if int(objetivo)==999:
-            self.flg_reconoce=False
-        # Estado 9 es de aceptacion
-        elif int(objetivo) in self.estados_finales:
-            self.flg_reconoce=True
+            tipo_token = self.tiposToken.get(ultimo_estado_final, 'TOKEN_DESCONOCIDO')
+            token = {
+                'valor': ultimo_token_valido,
+                'tipo': tipo_token,
+                'estado_final': ultimo_estado_final,
+                'posicion': posicion_inicial
+            }
+            return {
+                'token': token,
+                'error': None,
+                'siguiente_posicion': ultima_posicion_valida
+            }
         else:
-            self.flg_reconoce=False
-        
-    def encontrar_fila(self, encontrar):
-        izq = 0
-        der = len(self.mat_transicion['fila']) - 1
-
-        while izq <= der:
-            medio = (izq + der) // 2
-            if self.mat_transicion['fila'][medio] == encontrar:
-                # self.estado_actual = medio
-                # print("Encontrado en indice: ", medio)
-                # print("Encontrado en la fila: ", self.mat_transicion['fila'][medio])
-                # break
-                return medio
-            elif self.mat_transicion['fila'][medio] < encontrar:
-                izq = medio + 1
-            else:
-                der = medio - 1
+            caracter_error = texto[posicion_inicial] if posicion_inicial < len(texto) else 'EOF'
+            error = f"❌ Token no válido: '{caracter_error}' en posición {posicion_inicial}"
+            return {
+                'token': None,
+                'error': error,
+                'siguiente_posicion': posicion_inicial + 1
+            }
 
 
-
-texto = "inicio " \
-"receta Hola2 " \
-"ingredientes" \
-"10.50 litros agua " \
-"20 kilos harina " \
-"procedimiento " \
-"añadir(agua,harina) en tupper.mezcla " \
-# "INGREDIENTES" \
-# "AGUA 1 LITRO" 
-aut=Lexico(texto.upper())
-print("Tokens reconocidos: ", aut.tokens)  # Imprimir todos los tokens reconocidos
+if __name__ == '__main__':
+    archivo_matriz = 'vamoss.csv'
+    analizador = AnalizadorLexicoChefsito(archivo_matriz)
+    texto = """
+    INICIO
+    INGREDIENTES
+    AGUA 10.5 LITROS
+    HUEVOS 3 PIEZAS 
+    PROCEDIMIENTO
+    AÑADIR(AGUA,HUEVOS) EN TUPPER.hola
+    FIN
+    """
+    resultado = analizador.procesarTexto(texto)
+    print("\n📌 TOKENS ENCONTRADOS:")
+    for tok in resultado[0]:
+        print(tok)
+    print("\n❗ ERRORES LÉXICOS:")
+    for err in resultado[1]:
+        print(err)
