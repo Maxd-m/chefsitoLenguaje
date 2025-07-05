@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Grid Container</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="container">
+    <div class="header"><h2>Chefsito</h2></div>
+    <div class="menu">
+        <h3>Memoria, animacion, etc</h3>
+        <!-- <img src="../assets/chef.jpg" alt=""> -->
+        <img src="{{ url_for('static', filename='assets/chef.jpg') }}" alt="chef" style="width: 40%; height: auto;">
+
+    </div>
+    <div class="content">
+        <!-- <h3>Programa aquí</h3> -->
+        <form method="POST" action="/compilar" style="flex: 1; display: flex; flex-direction: column;">
+
+            <div class="containerButtons">
+                <div>
+                    <button disabled >Ejecutar linea</button>
+                </div>
+                <div>
+                    <button disabled >Ejecutar todo</button>
+                </div>
+                <div>
+                    <button type="submit">Compilar</button>
+                </div>  
+            </div>
+
+            <textarea name="codigo">{{ codigo or 'Programa aqui' }}</textarea>
+        </form>
+    </div>
+    <!-- <div class="footer"> -->
+        <!-- <h4>Consola</h4> -->
+    <div class="footer">
+        <h4>Consola</h4>
+        {% if mensaje %}
+            <p style="color: green;">{{ mensaje }}</p>
+        {% endif %}
+    </div>
+    </div>
+</div>
+</body>
+</html>
