@@ -25,7 +25,8 @@ class AnalizadorSintactico:
     def analizar_ingrediente(self):
         print("🔹 Analizando un ingrediente")
         self.consumir('IDENTIFICADOR')
-        self.consumir('CONSTANTE_NUMERICA')
+        if self.token_actual() in ['CONSTANTE_NUMERICA_ENTERA', 'CONSTANTE_NUMERICA_FLOTANTE']:
+            self.consumir(self.token_actual())
         unidad = self.token_actual()
         if unidad in ['PALABRA_RESERVADA_KILOS', 'PALABRA_RESERVADA_LITROS', 'PALABRA_RESERVADA_PIEZAS']:
             self.consumir(unidad)
@@ -75,7 +76,7 @@ if __name__ == '__main__':
     texto = '''
     INICIO
     INGREDIENTES
-    VAR1 7 PIEZAS
+    VAR1 7.1.1 PIEZAS
     VAR2 2 PIEZAS
     VAR3 5 PIEZAS
     PROCEDIMIENTO

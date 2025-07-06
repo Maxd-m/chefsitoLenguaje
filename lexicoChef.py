@@ -40,8 +40,10 @@ class AnalizadorLexicoChefsito:
 
         for e in ['6000', '6020']:
             self.tiposToken[e] = 'IDENTIFICADOR'
-        for e in ['7000', '7020', '8000', '8020']:
-            self.tiposToken[e] = 'CONSTANTE_NUMERICA'
+        for e in ['7000']:
+            self.tiposToken[e] = 'CONSTANTE_NUMERICA_ENTERA'
+        for e in ['8000']:
+            self.tiposToken[e] = 'CONSTANTE_NUMERICA_FLOTANTE'
 
         self.cargarMatrizTransicion()
 

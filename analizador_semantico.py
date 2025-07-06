@@ -6,7 +6,7 @@ class AnalizadorSemantico:
         self.instrucciones = [] # esquema de traducción 
         self.errores = []
 
-    def analizar(self):
+    def analizar(self): 
         self.extraer_ingredientes()
         self.verificar_procedimiento()
         self.mostrar_errores()
@@ -22,21 +22,33 @@ class AnalizadorSemantico:
                 i += 1
                 while i + 2 < len(self.tokens) and \
                     self.tokens[i]['tipo'] == 'IDENTIFICADOR' and \
-                    self.tokens[i+1]['tipo'] == 'CONSTANTE_NUMERICA' and \
+                    self.tokens[i+1]['tipo'] in ['CONSTANTE_NUMERICA_ENTERA', 'CONSTANTE_NUMERICA_FLOTANTE'] and \
                     self.tokens[i+2]['tipo'] in ['PALABRA_RESERVADA_KILOS', 'PALABRA_RESERVADA_LITROS', 'PALABRA_RESERVADA_PIEZAS']:
-                    
+
                     nombre = self.tokens[i]['valor']
-                    if nombre in self.ingredientes:
+                    tipo_constante = self.tokens[i+1]['tipo']
+                    unidad = self.tokens[i+2]['valor']
+
+                    tipo_correcto = (
+                        (unidad in ['KILOS', 'LITROS'] and tipo_constante == 'CONSTANTE_NUMERICA_FLOTANTE') or
+                        (unidad == 'PIEZAS' and tipo_constante == 'CONSTANTE_NUMERICA_ENTERA')
+                    )
+
+                    if not tipo_correcto:
+                        self.errores.append(f"Unidad '{unidad}' requiere un número {'flotante' if unidad in ['KILOS', 'LITROS'] else 'entero'} en el ingrediente '{nombre}'.")
+                    elif nombre in self.ingredientes:
                         self.errores.append(f"Ingrediente duplicado: '{nombre}' ya fue declarado.")
                     else:
                         self.ingredientes[nombre] = {
                             'valor': self.tokens[i+1]['valor'],
-                            'unidad': self.tokens[i+2]['valor']
+                            'unidad': unidad
                         }
                         print(f"✅ Ingrediente agregado: {nombre}")
+
                     i += 3
                 continue
             i += 1
+
 
     def verificar_procedimiento(self):
         print(" Verificando instrucciones en el PROCEDIMIENTO...")
